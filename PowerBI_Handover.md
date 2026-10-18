@@ -2,7 +2,7 @@
 
 > **Purpose:** give a new AI assistant everything it needs to continue the 1-grid Daily Sales Power BI work without re-asking. Read this first, then the supporting files listed in §10.
 > **Owner:** Josh Stevenson (Nexora Web Agency), building the report for 1-grid.
-> **State as of:** 18 Oct 2026, ~14:50 UTC.
+> **State as of:** 18 Oct 2026, ~14:50 UTC; offline session notes added the same day (§11).
 
 ---
 
@@ -13,11 +13,11 @@
 | 1 | **Website (GA) page + grouped filters** are built in the copy *Daily sales (v3.0) - new layout preview* | ❌ **Josh said no (18 Oct)** to copying them onto the live *Daily sales (v3.0)* report | Leave the live report as is. The preview copy stays for reference; don't delete it unless Josh asks. Details in §6.3. |
 | 1b | **New Website page + 3 deep-dive pages, grouped filters, tooltip fix, Breakdown selector** | ✅ **Approved by Josh and LIVE (18 Oct ~11:50 UTC)** | The build copy's definition was pushed onto the live *Daily sales (v3.0)* (same ID/URL). Restore point: *Daily sales (v3.0) - backup before deep dive 2026-10-18* (ID 6f2a2242-3a79-4a10-a961-6777576aea31). Details §6.4–6.5. |
 | 1c | **Model changed 18 Oct ~11:20 UTC** (Bing Ads, Breakdown parameter) — see §6.5 | ✅ Done, live | Restore point: semantic model *Daily sales (Model) v2.0 - definition backup 2026-10-18* (metadata only). |
-| 1d | **Full redesign of all 9 pages** (slide-out filter drawer, KPI band with deltas, low-noise charts, new website tooltip) in the copy *Daily sales (v3.0) - redesign build* (ID 47b9663c-4c3e-4039-84ab-f04d71d1570d) | ⏳ **Waiting for Josh's review**. Not on live. ❗ **Josh reports the filter drawer does not close** (18 Oct ~14:40 UTC) | Fix the drawer first (§6.6 *Open bug*). Then Josh checks the build. Promote onto live only when he approves; take a fresh backup of live first. Details §6.6. |
+| 1d | **Full redesign of all 9 pages** (slide-out filter drawer, KPI band with deltas, low-noise charts, new website tooltip) in the copy *Daily sales (v3.0) - redesign build* (ID 47b9663c-4c3e-4039-84ab-f04d71d1570d) | ⏳ **Waiting for Josh's review**. Not on live. ❗ **Josh reports the filter drawer does not close** (18 Oct ~14:40 UTC). 🛠 **Fix script ready, not yet run:** `scripts/drawerfix.js` (§11.1) | Run drawerfix.js on one page, test with real mouse clicks, then all 9 pages, then *Reset to default* (§11.1). Then Josh checks the build. Promote onto live only when he approves, with `scripts/promote_redesign.js` (backs up live first; §11.2). Details §6.6. |
 | 2 | **Web edits vs the .pbix** | ⚠️ Risk | Everything in §6 was edited directly in the Power BI service. **Re-publishing the model or report from a Desktop .pbix will overwrite these edits.** Download a fresh copy from the service before any Desktop work. |
-| 3 | Extra report copies in the workspace | Open | *Daily sales (v3.0) - backup 2026-10-18*, *- backup before deep dive 2026-10-18* (restore points), *- new layout preview*, *- deep dive build* (now the same as live), *- redesign build*. Josh hasn't said whether to delete any. Keep the backups until he does. |
-| 4 | BigQuery refresh cost | Open | `GA_INVOICES` and `Sessions` rescan every GA4 event since 2026-01-01 on each refresh. Suggested fix: BigQuery scheduled queries that append yesterday only. Not started. |
-| 5 | Model clean-up (16 unused legacy tables, auto date/time) | Proposed 9 Oct, not done | List in §8. Josh asked to keep `Calculator` and `Order recurring amount` earlier. Check lineage first (two reports share the model). |
+| 3 | Extra report copies in the workspace | Open, proposal in §11.3 | *Daily sales (v3.0) - backup 2026-10-18*, *- backup before deep dive 2026-10-18* (restore points), *- new layout preview*, *- deep dive build* (now the same as live), *- redesign build*. Josh hasn't said whether to delete any. Keep the backups until he does. Not re-listed via the API on 18 Oct (no Chrome). |
+| 4 | BigQuery refresh cost | Drafted, not deployed (§11.4) | `GA_INVOICES` and `Sessions` rescan every GA4 event since 2026-01-01 on each refresh. Draft in `daily-sales-ga4/incremental/`: partitioned tables + idempotent daily load (last 3 days) + views with a live tail, then a SQL-text-only Power Query change. Needs Josh's go-ahead, and the original Sessions SQL to finish `tvf_sessions`. |
+| 5 | Model clean-up (16 unused legacy tables, auto date/time) | Proposed 9 Oct, refined 18 Oct (§11.5), not done | List in §8, removal list in §11.5. Josh asked to keep `Calculator` and `Order recurring amount`. Check lineage and v3.0 visual usage first (two reports share the model). |
 | 6 | Attribution rule | Design choice | GA attribution = user's **first session on the day they viewed the invoice**, not the session of the view. Kept on purpose; change only if Josh asks. |
 
 ---
@@ -210,6 +210,7 @@ Josh asked to reformat every page using dashboard design principles (signal-to-n
   2. A native **bookmark navigator** for a per-page group [Open, Close].
   3. As a test, set Done `isHidden:false` on one page and check whether a mouse click then works.
 - **Test with real mouse clicks.** Synthetic clicks from Claude in Chrome also failed on Done, so they are a reasonable proxy for this bug.
+- **18 Oct (offline session): fix idea 1 is scripted as `scripts/drawerfix.js` but has NOT been run on the service yet** (no Chrome in that session). It removes the ✕ and Done visuals rather than making them visible at load: visible at load they would sit over the KPI band and the content area as transparent click targets. How to run it: §11.1.
 
 **Lessons:**
 - An invalid property in a visual (e.g. `fillCustom`, or `backgroundShow` in the wrong object) makes updateDefinition fail **and corrupts the report** (getDefinition → Explore_ExplorationNotFound). The fix was to rebuild from live with the script and push onto the same ID. Keep the build script as the source of truth.
@@ -259,6 +260,8 @@ Josh asked to reformat every page using dashboard design principles (signal-to-n
 
 ## 10. Supporting files to upload with this handover
 
+(18 Oct additions: `scripts/drawerfix.js`, `scripts/promote_redesign.js`, `daily-sales-ga4/incremental/*`. In Josh's `~/Desktop/powerbi` repo, the scripts live in `scripts/`; in the Project they belong under `daily-sales-v3/scripts/`.)
+
 | File | What it is |
 |---|---|
 | `daily-sales-v3/scripts/*.js` | Browser-console build scripts (run in an app.powerbi.com tab). `boot.js` defines the helpers (`__getDef`, `__lro`, `__qq`, `__show`…; set `window.__R` to the target report). `redesign2.js` = full redesign from live → build parts in `window.__rparts`/push. `zfix.js` = the z-order patch. `build.js`/`param.js`/`bing_cols.js` = deep dive, Breakdown and Bing work (historical, already live). See `daily-sales-v3/scripts/README.md`. |
@@ -270,3 +273,78 @@ Josh asked to reformat every page using dashboard design principles (signal-to-n
 | `knowledge/daily-sales-v2/Sales_Report_xlsx_summary.md` | What the team tracks in Excel today (daily paid revenue by product line, excl. VAT, on paid date). |
 
 The `knowledge/daily-sales/` folder holds older duplicates of the same files; the `daily-sales-v2/` versions are current.
+
+---
+
+## 11. Session 18 Oct 2026 (afternoon, cloud session, offline)
+
+**What this session could reach:** Josh's repo `joshstevensonx/powerbi_v2` (a copy of `~/Desktop/powerbi`, pushed for this session) and nothing else. The Claude in Chrome tools and the Project files tool weren't available, so **nothing was changed in Power BI, the model or BigQuery**. Everything below is either ready to run or a proposal.
+
+### 11.1 Drawer fix: `scripts/drawerfix.js` (ready, not yet run)
+The fix is idea 1 from §6.6. On each of the 9 pages it:
+- Adds a **Close filters** action button with the Filters button's exact spot (x24 y100 w150 h40), `isHidden:false` at load, a lower z than the Filters button and a link to *Close filters – <page>*. It also adds a hidden **"✕  Close filters"** textbox label, cloned from the "☰  Filters" label.
+- **Open** bookmark now also hides the Filters button and its label and shows the close label. **Close** reverses that. All three are added to both bookmarks' `targetVisualNames` and `visualContainers` (hidden = `display:{mode:'hidden'}`). The close button itself isn't toggled, so it stays visible-at-load underneath.
+- Removes the old ✕ and Done buttons, their labels and the Done bar shape, and takes them out of both bookmarks. Making them visible at load instead would leave transparent click targets over the KPI band and the content area while the drawer is closed.
+- Raises the Filters button z only if a drawer visual overlaps the toggle spot, so the close button is on top while the drawer is open.
+- Only clones existing visuals and edits name, position, text, bookmark link, title text and isHidden, so it adds no new visual properties. It checks that each page stays 1580×1148, the slicer count is unchanged, every bookmark target exists, and each page has exactly 1 Open and 1 Close button. Visual names are stable, so a re-run updates instead of duplicating. It drops `.platform`, keeps the pre-run definition in `window.__dfOrig` (undo: `await window.__dfRestore()`), and re-reads the report after the push.
+- Tested offline only, in Node against a mock definition built like `redesign2.js` output: dry run, one-page push, idempotent re-run, refusal to run on any report other than 47b9663c. Not tested in the service.
+
+**Run it (Chrome):**
+1. Open app.powerbi.com, run `boot.js`, then `window.__R='47b9663c-4c3e-4039-84ab-f04d71d1570d'`.
+2. Dry run on Overview: `window.__dfOnly=['<Overview page id>']` (the ids are in `redesign2.js` PAGES), run the script, then read `#__dump`. Expect `removed 5` (2 buttons, ✕, Done, shape) and no PROBLEMS.
+3. Set `window.__dfPush=true` and run again. Open the build on Overview and **click with a real mouse**: Filters → drawer opens and the toolbar shows "✕ Close filters" → click it → drawer closes → repeat.
+4. If that works: `window.__dfOnly=null`, run with push for all pages (Overview is a no-op on re-run). Then open, close, open, close by mouse on all 9 pages.
+5. *Reset to default* (find "Reset to default" button, confirm Reset).
+6. If the toggle also ignores clicks after the Close bookmark re-shows the Filters button, the "hidden at load" theory is incomplete. Next try is idea 2 (bookmark navigator).
+
+### 11.2 Promotion of the redesign (Task B): **do not run without Josh's explicit approval**
+Pre-checks in Chrome, not done yet: review all 9 pages, hover-test the tooltips (TT · Website traffic on the Website combo, devices, browsers, campaigns and source/medium tables; plus the 17 tooltip pages), drawer open/close by mouse on every page.
+
+Exact steps (scripted in `scripts/promote_redesign.js`, which refuses to run unless `window.__promoteApproved='Josh approved <date/where>'`):
+1. Clone live `d0210659-…` to **"Daily sales (v3.0) - backup before redesign <YYYY-MM-DD>"** (Power BI REST `reports/{id}/Clone`, same workspace, same model). The script stops if this fails.
+2. getDefinition of the build `47b9663c-…`, drop `.platform` (so live keeps its name), updateDefinition onto live `d0210659-…` (same ID and URL). Re-read live to confirm it isn't corrupted. If it is, push the backup's definition back.
+3. Open live, run **Reset to default**, then hover-test tooltips and open/close the drawer on a few pages. Tell viewers with saved state to use Reset to default once.
+
+### 11.3 Report copies (Task C, proposal only; nothing deleted)
+From this handover; not re-listed through the REST API (no Chrome).
+
+| Copy | ID | Purpose | Proposal |
+|---|---|---|---|
+| Daily sales (v3.0) | d0210659-… | **Live** | keep |
+| Daily Sales (v2.0) | 7e523292-… | Older live report on the same model | keep (ask Josh if still used) |
+| Daily sales (v3.0) - backup 2026-10-18 | not recorded | Restore point before the header restyle | keep until the redesign is live and stable, then delete |
+| Daily sales (v3.0) - backup before deep dive 2026-10-18 | 6f2a2242-… | Restore point before the deep dive promotion | keep until the redesign is live and stable, then keep only the newest backup |
+| Daily sales (v3.0) - new layout preview | not recorded | GA page and grouped filters Josh rejected | delete if Josh agrees |
+| Daily sales (v3.0) - deep dive build | 1d54745e-… | Same definition as live since 18 Oct | delete if Josh agrees. ⚠ `boot.js` defaults `__R` to this ID; change the default first |
+| Daily sales (v3.0) - redesign build | 47b9663c-… | Redesign in progress | keep until promoted |
+| *(model)* Daily sales (Model) v2.0 - definition backup 2026-10-18 | 38738a05-… | Model metadata restore point | keep |
+
+### 11.4 BigQuery refresh cost (Task C, drafted, not deployed)
+All of it is in `daily-sales-ga4/incremental/`; start with its README. In short:
+- `daily_sales_ga4.ga_sessions_daily` / `ga_invoice_first_view`: partitioned tables.
+- One copy of the logic in table functions. `tvf_invoice_views` = `ga_invoice_fixed.sql` plus a window. ⚠ `tvf_sessions` is rebuilt from the §5.10 column spec, because the original Sessions SQL isn't in the repo.
+- Idempotent `load_*` procedures (delete and re-insert the window in one transaction). A daily scheduled query reloads the last 3 days.
+- Views `v_ga_sessions` / `v_ga_invoice` add a live tail (last 3 days + intraday), so the report stays as current as now.
+- `06_validate.sql` diffs old vs new. In Power BI only the SQL text in the two partitions changes, with the same columns and grain, so relationships and lookup columns are untouched.
+- SQL not executed: no BigQuery access in this session. Needs Josh's go-ahead, the dataset location and a console check.
+
+### 11.5 Model clean-up (Task C, proposal only; nothing deleted)
+Based on the 7 Oct TMDL backup (`DailySales_docs/model_backup_2026-10-07_before_cleanup.tmdl` / `model.tmdl`) and the v2 doc's field usage. **Not yet checked:** Lineage view, and visual usage in the current v3.0 report. Both need Chrome. Do them before removing anything, then take a model definition backup.
+
+**Propose removing:**
+
+| Table | Why |
+|---|---|
+| Max sales previous wk, Max sales previous wk1 | No references from other tables. Broken (reference a missing `[Total new revenue]`). |
+| Daily sessions - GA, Hourly sessions - GA, Conversion - GA, Transaction IDs - GA | Universal Analytics, dead since 2023/24, replaced by Sessions / GA_INVOICES. Nothing else references them. Their only relationships go to Calendar[Date]. |
+| Daily budget by order& traffic (FY21), (FY22) | Out of date. Only relationships to Calendar[Date] and (FY22) Calculator[Product type]; no DAX references. |
+| Mapping, Customer age grouping | No references anywhere in the model. |
+| Level Of Detail | Unused field parameter (v2.0). Check the v3.0 report first; the Breakdown parameter replaced it there. |
+| Empty / unused columns | `revenue_orders_tbl[Column]`, `[Column 3]`, `Paid_Rev`, `Unpaid_Cancelled_Rev`, `orders_invoices_tbl[today]`. Check DAX dependencies first. |
+
+**Keep:**
+- `Calculator` and `Order recurring amount` (Josh's request).
+- `Combined_rev Summary 2`, `Combined_rev Summary 3` and `Invoice Revenue (improved)`, which Calculator's DAX uses. Note `Invoice Revenue (improved)` also has a relationship from `orders_invoices_tbl[order_invoiceid]`.
+- Everything in §8's must-keep list.
+
+Also: turn off Auto date/time (~59 hidden tables; likely needs Desktop, so download a fresh copy from the service first, §1 item 2). Hide the personal and payment columns in `Clients`.
