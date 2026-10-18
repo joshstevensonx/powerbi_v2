@@ -12,6 +12,8 @@ All of these run in the browser console of a signed-in app.powerbi.com tab. Clau
 | boot.js | Helpers: `__W`, `__R` (set it to the target report!), `__dec`/`__enc` (base64 UTF-8), `__H`, `__lro`, `__getDef`, `__qq` (DAX), `__show`, `__ensureDef`. |
 | redesign2.js | Full redesign: reads live (d0210659…) and builds the toolbar, drawer, Open/Close bookmarks per page, KPI band, noise cuts and drawer measures. It's the source of truth for the redesign build (47b9663c…). Later patches (KPI sizes, TT · Website traffic tooltip, Done button, z-fix) were done ad hoc. See handover §6.6. |
 | zfix.js | Raises Close/Done/✕ visuals above the hidden slicers (z ≥ 100,010). Needs `window.__parts` from a getDefinition. |
+| drawerfix.js | Filter drawer close fix (handover §6.6 / §11.1). Adds a visible-at-load Close toggle under the Filters button, swaps them via the Open/Close bookmarks, removes the old ✕/Done visuals. Redesign build only. Dry run by default (`window.__dfPush = true` to push); `window.__dfOnly = [pageId]` to test one page; undo with `window.__dfRestore()`. |
+| promote_redesign.js | Clones live as a dated backup, then copies the redesign build's definition onto live (§11.2). Refuses to run without `window.__promoteApproved = 'Josh approved …'`. |
 | build.js, param.js, bing_cols.js | Deep dive pages, Breakdown field parameter, Bing Ads calc columns. Already live; kept for reference. |
 
 IDs: workspace 78cf89a0-f94a-4399-924d-ad3088c8e605 · model 3647ff2a-d50e-4cfb-bf02-bed980609485 · live v3.0 d0210659-85fd-4d40-93c4-03d8683c492f · redesign build 47b9663c-4c3e-4039-84ab-f04d71d1570d.
